@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-L4 测试：GaussDB 向量能力（B 维度 SQL 契约层）
+L4 测试：GaussDB 向量能力（SQL 契约层）
 从 .env.test 读配置，无需手改。不依赖 tsx / n8n 源码，纯 psycopg2 直连 GaussDB。
 
 覆盖 4 组（对应内部探针 N-EXP-03/05/06/13 的纯 SQL 部分）：
@@ -24,7 +24,7 @@ L4 测试：GaussDB 向量能力（B 维度 SQL 契约层）
 
 自动化/CI：
   exit 0 = 全通过；exit 1 = 有失败。
-  可串入 run_all.sh：./run_all.sh  # L2 连通 + L3 C 维度 + L4 向量 一键跑
+  可串入 run_all.sh：./run_all.sh  # L2 连通 + L3 数据库节点 + L4 向量 一键跑
 """
 import os
 import sys
@@ -88,7 +88,7 @@ def calc_pq_nseg(dim):
 def vec_literal(dim, val=0.1):
     return '[' + ','.join([str(val)] * dim) + ']'
 
-print(f"\n=== L4: GaussDB 向量能力测试（B 维度 SQL 契约层）===")
+print(f"\n=== L4: GaussDB 向量能力测试（SQL 契约层）===")
 print(f"目标: {HOST}:{PORT}/{DATABASE} (user={USER})\n")
 
 # 选组

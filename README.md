@@ -11,12 +11,12 @@ GaussDB 生态建设：n8n 适配兼容 GaussDB（数据库节点 + 向量库）
 
 本项目将 [n8n](https://github.com/n8n-io/n8n) 2.34.6 适配到华为云 GaussDB，让用户在 n8n workflow 中使用 GaussDB 作为存储数据库和向量数据库：
 
-- **数据库节点（C 维度）**：新增 GaussDb 节点（6 operation：executeQuery/insert/update/select/upsert/deleteTable），用户在 workflow 里对 GaussDB 做 SQL 增删改查（智数查询场景）
-- **向量节点（B 维度）**：新增 VectorStoreGaussDB + ChatHubVectorStoreGaussDB 节点，基于 GaussDB 原生向量（floatvector + GsIVFFLAT/GsDiskANN 索引）做 RAG 向量存储/检索
+- **数据库节点**：新增 GaussDb 节点（6 operation：executeQuery/insert/update/select/upsert/deleteTable），用户在 workflow 里对 GaussDB 做 SQL 增删改查（智数查询场景）
+- **向量节点**：新增 VectorStoreGaussDB + ChatHubVectorStoreGaussDB 节点，基于 GaussDB 原生向量（floatvector + GsIVFFLAT/GsDiskANN 索引）做 RAG 向量存储/检索
 - **O模式适配**：GaussDB O模式（DBCOMPATIBILITY='A'）完整适配——upsert 用 MERGE INTO（O模式无 ON CONFLICT）、id 用 varchar(36)+应用层 uuid（无 gen_random_uuid）、空串→NULL、jsonb 操作符
 - **自动探测不抛报错**：节点自动探测 GaussDB 形态（集中式/分布式）+ 维度上限，自动选索引策略，仅物理硬限给友好提示
 
-> **范围说明**：本适配覆盖客户场景（workflow 里用 GaussDB 做智数查询/RAG）。n8n 自身元数据跑 GaussDB（A 维度）为 P2 未实现。
+> **范围说明**：本适配覆盖客户场景（workflow 里用 GaussDB 做智数查询/RAG）。n8n 自身元数据跑 GaussDB 未实现，自身库用 SQLite 或 PostgreSQL。
 
 > ⚠️ **部署/使用/二次开发前必读 [注意事项](delivery/注意事项.md)**：O模式适配（MERGE INTO/varchar uuid/空串）、enable_vectordb 实例级开启、pgvector 不兼容、维度限制、密码特殊字符、ErrorOptions 构建修复等关键约束。
 
@@ -61,7 +61,7 @@ docker run -d --name n8n-gaussdb \
 GaussDB 连接分两个层面（详见 [delivery/配置文档.md](delivery/配置文档.md)）：
 
 1. **n8n 自身元数据库**（存 workflow/credentials）：通过环境变量 `DB_TYPE` + `DB_POSTGRESDB_*`（默认 sqlite，本次适配不涉及 GaussDB 作自身库）
-2. **workflow 里连 GaussDB**（C 智数查询 + B 向量）：在 n8n UI → Credentials 配置（非环境变量）：
+2. **workflow 里连 GaussDB**（智数查询 + 向量 RAG）：在 n8n UI → Credentials 配置（非环境变量）：
    - GaussDb 节点：选 "GaussDB" 凭据，填 host/port/database/user/password/ssl
    - 向量节点：选 "Postgres" 凭据（GaussDB PG 协议兼容），指向 GaussDB
 
@@ -70,22 +70,22 @@ GaussDB 连接分两个层面（详见 [delivery/配置文档.md](delivery/配�
 测试方法见 [delivery/测试指南.md](delivery/测试指南.md)，含 5 层测试：
 - L1 健康检查
 - L2 GaussDB 连通性 + 节点加载验证
-- L3 数据库节点 6 operation 端到端（C 维度）
-- L4 向量节点全链路（B 维度：floatvector/GsIVFFLAT/GsDiskANN+PQ）
+- L3 数据库节点 6 operation 端到端
+- L4 向量节点全链路（floatvector/GsIVFFLAT/GsDiskANN+PQ）
 - L5 边界 + 回归（SQL 注入/特殊字符/O模式/维度边界/Postgres 节点不回归）
 
 测试脚本在 [delivery/tests/](delivery/tests/)（自动从 `.env.test` 读配置，无需手改），含一键 `run_all.sh`。
 
 ## 适配改造说明
 
-### 数据库节点适配（C 维度）
+### 数据库节点适配
 - 新增 `packages/nodes-base/nodes/GaussDb/`（Postgres v2 多文件结构，6 operation）
 - 复用 Postgres v1 genericFunctions（pgInsert/pgQueryV2/pgUpdate）
 - `configureGaussDb`（nodeType:'gaussDb'，不复用 configurePostgres 避免池冲突）
 - 凭据 `gaussDbApi`（lint 规则要求 Api 后缀，不在豁免列表）
 - upsert 用 MERGE INTO（O模式不支持 ON CONFLICT）
 
-### 向量节点适配（B 维度）
+### 向量节点适配
 - 新增 `GaussDBVectorStore extends Langchain VectorStore`（不 extends PGVectorStore，pgvector SQL 不可复用）
 - floatvector/GsIVFFLAT/GsDiskANN+PQ，距离算子 `<+>`，score = 1 - distance
 - id 用 varchar(36) + 应用层 uuid（O模式无 gen_random_uuid）
@@ -103,11 +103,11 @@ GaussDB 连接分两个层面（详见 [delivery/配置文档.md](delivery/配�
 ## 目录结构
 
 ```
-├── packages/nodes-base/nodes/GaussDb/         # C 维度：GaussDb 数据库节点（30 文件）
+├── packages/nodes-base/nodes/GaussDb/         # GaussDb 数据库节点（30 文件）
 ├── packages/@n8n/nodes-langchain/
 │   └── nodes/vector_store/
-│       ├── VectorStoreGaussDB/                # B 维度：标准向量节点
-│       └── ChatHubVectorStoreGaussDB/         # B 维度：ChatHub 向量节点
+│       ├── VectorStoreGaussDB/                # 标准向量节点
+│       └── ChatHubVectorStoreGaussDB/         # ChatHub 向量节点
 ├── packages/@n8n/errors/src/types.ts          # pre-existing 修复（ErrorOptions）
 ├── delivery/                                  # 交付包
 │   ├── .env.example                           # n8n 配置模板
@@ -115,7 +115,7 @@ GaussDB 连接分两个层面（详见 [delivery/配置文档.md](delivery/配�
 │   ├── 实施部署交付文档.md                    # 部署步骤
 │   ├── 测试指南.md                            # 测试方法
 │   ├── 注意事项.md                            # 部署/使用/二次开发避坑必读
-│   └── tests/                                 # 测试脚本（连通/C维度/向量 + run_all.sh）
+│   └── tests/                                 # 测试脚本（连通/数据库/向量 + run_all.sh）
 └── survey/                                    # 调研产出（不入 git，仅内部参考）
 └── survey/                                    # 调研产出（不入 git，仅内部参考）
     ├── n8n-gaussdb-调研报告.md

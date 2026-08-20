@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 一键自动化测试：L2 连通 + L3 C 维度 + L4 向量
+# 一键自动化测试：L2 连通 + L3 数据库节点 + L4 向量
 #
 # 用法：
 #   cp .env.test.example .env.test && vi .env.test
@@ -41,9 +41,9 @@ run() {
 # L2：连通性（python）
 run "L2 GaussDB 连通性" python3 test_gaussdb_connect.py
 
-# L3：C 维度 6 operation SQL 层（需 gsql/psql；无则跳过）
+# L3：数据库节点 6 operation SQL 层（需 gsql/psql；无则跳过）
 if command -v gsql >/dev/null 2>&1 || command -v psql >/dev/null 2>&1; then
-  run "L3 C 维度 6 operation" bash test_c_operations.sh
+  run "L3 数据库节点 6 operation" bash test_c_operations.sh
 else
   echo
   echo "○ SKIP L3（无 gsql/psql，改用 python 或 n8n UI 测）"
