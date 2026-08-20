@@ -101,6 +101,7 @@ delivery/tests/__pycache__/
 # 本地构建/测试日志
 *-build.log
 gaussdb_test.log
+tc.log
 eval-run.log
 eval-smoke.log
 
