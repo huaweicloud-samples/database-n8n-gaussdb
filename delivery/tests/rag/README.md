@@ -11,6 +11,7 @@
 | `rag_mock_server.py` | OpenAI 兼容 mock 服务（1536 维向量 + chat 端点） |
 | `rag_w1_insert.json` | workflow：文档 → Embeddings → GaussDB 入库 |
 | `rag_w2_load.json` | workflow：prompt → GaussDB 检索 top-k + score |
+| `rag_w3_qa.json` | workflow：Q&A Chain + Vector Store Retriever → GaussDB 检索 → 生成回答（经典 RAG 问答闭环） |
 | `rag_w6_agent.json` | workflow：AI Agent + GaussDB 向量工具（现代 RAG 形态） |
 
 ## 使用步骤
@@ -35,6 +36,7 @@ python3 rag_mock_server.py
 # 导入（或 UI 里 Import from File）
 n8n import:workflow --input=rag_w1_insert.json
 n8n import:workflow --input=rag_w2_load.json
+n8n import:workflow --input=rag_w3_qa.json
 n8n import:workflow --input=rag_w6_agent.json
 ```
 
@@ -46,7 +48,10 @@ n8n import:workflow --input=rag_w6_agent.json
 |---|---|
 | w1 insert | 执行成功；GaussDB 表 `n8n_rag_test` 有 4 行，`embedding` 为 **1536 维**向量；索引为 **GsDiskANN+PQ**（`pq_nseg=96`，>1024 维自动走 PQ 路径） |
 | w2 load | 执行成功；返回 top-2 文档 + score（随机向量近正交，score 接近 0 属正常） |
+| w3 qa chain | 执行成功；返回的回答 context 中含 GaussDB 检索文档（完整 RAG 闭环：问题→检索→生成） |
 | w6 agent | 执行成功；AI Agent 组装并调用 mock chat 返回回答 |
+
+**w3 关键结构**：Q&A Chain 的 Retriever 输入**必须经过 "Vector Store Retriever" 中间节点**（`retrieverVectorStore`，内部做 `vectorStore.asRetriever()` 转换），不能把向量节点直接连到 Q&A Chain 的 Retriever 输入（直接连会报 `retrieveDocumentsChain.withConfig is not a function`——UI 连线本身会阻止这种错误连接，仅手工导入 JSON 时可能踩到）。
 
 GaussDB 侧检查：
 
@@ -56,7 +61,3 @@ SELECT length(embedding::text) - length(replace(embedding::text, ',', '')) + 1 F
 -- 索引（应 gsdiskann + pq_nseg=96）
 SELECT indexdef FROM pg_indexes WHERE tablename = 'n8n_rag_test' AND indexname LIKE '%embedding%';
 ```
-
-## 已知问题（非 GaussDB 相关）
-
-"Question and Answer Chain"（`chainRetrievalQa`）节点在 n8n 2.34.6 下执行报 `retrieveDocumentsChain.withConfig is not a function`——n8n 自身依赖问题（In-Memory 向量库同样报错，已对照验证）。RAG 问答请用 AI Agent + 向量工具（w6）。
