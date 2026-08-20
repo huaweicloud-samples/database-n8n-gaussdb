@@ -22,36 +22,33 @@ GaussDB 生态建设：n8n 适配兼容 GaussDB（数据库节点 + 向量库）
 
 ## 快速部署
 
-**部署目录结构**（`.env` 必须和启动配置在同一目录）：
+**环境要求**：Node.js ≥ 22.22、pnpm ≥ 10.22（`node -v` / `pnpm -v` 检查）。
 
-```
-/opt/n8n-gaussdb/                    ← 部署目录
-├── n8nio-n8n-gaussdb.tar            ← 镜像（docker load 后可删）
-├── .env                             ← 从 .env.example 复制并修改
-└── tests/                           ← 测试脚本（从 delivery/tests/ 复制，可选）
-```
+本仓库交付完整源码（无预构建镜像），从源码构建 Docker 镜像部署：
 
 ```bash
-# 1. 准备部署目录
-mkdir -p /opt/n8n-gaussdb && cd /opt/n8n-gaussdb
+# 1. 克隆仓库
+git clone https://github.com/huaweicloud-samples/database-n8n-gaussdb.git
+cd database-n8n-gaussdb
 
-# 2. 下载镜像 tar 并加载（从 Release 下载）
-docker load -i n8nio-n8n-gaussdb.tar
+# 2. 构建（全量 build 约 10-20 分钟）
+pnpm install
+pnpm build
+pnpm build:docker                          # 产出本地镜像
+docker tag n8nio/n8n:local n8nio/n8n:gaussdb
 
-# 3. 从交付包复制配置模板（delivery/ 内容已随仓库 clone 到本地）
+# 3. 配置 .env
 cp delivery/.env.example .env
+vi .env    # 填 N8N_ENCRYPTION_KEY 等（GaussDB 连接在 UI 配，不在 .env）
 
-# 4. 编辑 .env，填入 n8n 配置（N8N_ENCRYPTION_KEY 等，GaussDB 连接在 UI 配）
-vi .env
-
-# 5. 启动
+# 4. 启动
 docker run -d --name n8n-gaussdb \
   -p 5678:5678 \
   --env-file .env \
   -v n8n_data:/home/node/.n8n \
   n8nio/n8n:gaussdb
 
-# 6. 访问 http://localhost:5678，在 UI 配置 GaussDB 凭据（见配置文档）
+# 5. 访问 http://localhost:5678，在 UI 配置 GaussDB 凭据（见配置文档）
 ```
 
 > 也支持源码直接启动：`pnpm install && pnpm build && pnpm start`。详见 [delivery/实施部署交付文档.md](delivery/实施部署交付文档.md)。
