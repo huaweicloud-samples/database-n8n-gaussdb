@@ -1,0 +1,110 @@
+{
+  "id": "8ba6c0e5-cf71-4d93-9e65-f7a8b9c0d1e2",
+  "name": "RAG Test - AI Agent Tool",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "mt6",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "根据知识库回答：什么是 GaussDB 数据库？",
+        "options": {
+          "systemMessage": "你是知识库助手，用检索到的内容回答问题。"
+        }
+      },
+      "id": "ag6",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "mock-chat"
+        },
+        "options": {}
+      },
+      "id": "lm6",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [220, 220],
+      "credentials": {
+        "openAiApi": {
+          "id": "jXUnufqzRk1Kd41P",
+          "name": "Mock OpenAI (local)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "mock-embedding-1536",
+        "options": {}
+      },
+      "id": "emb6",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [220, 440],
+      "credentials": {
+        "openAiApi": {
+          "id": "jXUnufqzRk1Kd41P",
+          "name": "Mock OpenAI (local)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "tableName": "n8n_rag_test",
+        "indexType": "auto",
+        "toolName": "gaussdb_knowledge",
+        "toolDescription": "GaussDB 和 RAG 相关知识库，检索相关文档",
+        "topK": 2,
+        "embeddings": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Embeddings OpenAI"
+        },
+        "options": {}
+      },
+      "id": "vs6",
+      "name": "GaussDB Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreGaussDB",
+      "typeVersion": 1.1,
+      "position": [440, 440],
+      "credentials": {
+        "postgres": {
+          "id": "vP3FvTRsX9Ig9bRS",
+          "name": "GaussDB RAG Test"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [[{ "node": "GaussDB Vector Store", "type": "ai_embedding", "index": 0 }]]
+    },
+    "GaussDB Vector Store": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
