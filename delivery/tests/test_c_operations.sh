@@ -36,7 +36,8 @@ fi
 
 run_sql() {
   # $1 = SQL；返回结果
-  $CLI -h "$HOST" -p "$PORT" -U "$USER" -d "$DB" -t -A -c "$1" 2>&1
+  # -q 安静模式：抑制 INSERT 0 1 / UPDATE 1 等状态行（psql 会输出，干扰空输出判断）；SELECT 结果不受影响
+  $CLI -h "$HOST" -p "$PORT" -U "$USER" -d "$DB" -q -t -A -c "$1" 2>&1
 }
 
 passed=0; failed=0
