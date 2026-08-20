@@ -7,6 +7,10 @@ L2 测试：GaussDB 连通性 + 节点加载验证
 import os
 import sys
 
+# Windows 终端默认 GBK，打印 ✓/✗ 会 UnicodeEncodeError，强制 UTF-8
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 # 加载 .env.test
 env_file = os.path.join(os.path.dirname(__file__), '.env.test')
 if os.path.exists(env_file):

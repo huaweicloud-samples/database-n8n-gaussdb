@@ -3,7 +3,7 @@
 L4 测试：GaussDB 向量能力（SQL 契约层）
 从 .env.test 读配置，无需手改。不依赖 tsx / n8n 源码，纯 psycopg2 直连 GaussDB。
 
-覆盖 4 组（对应内部探针 N-EXP-03/05/06/13 的纯 SQL 部分）：
+覆盖 4 组：
   1. 向量 CRUD：floatvector 建表 + 字符串字面量插入 + GsIVFFLAT 索引 + <+> 检索 + score=1-dist + UPDATE/DELETE
   2. 维度上限：GsIVFFLAT / GsDiskANN(无PQ) 在 1024/1536/4096 维建索引
   3. GsDiskANN+PQ 高维：1536/3072/4096 维 + pq_nseg 整除 + 检索
@@ -28,6 +28,10 @@ L4 测试：GaussDB 向量能力（SQL 契约层）
 """
 import os
 import sys
+
+# Windows 终端默认 GBK，打印 ✓/✗ 会 UnicodeEncodeError，强制 UTF-8
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 # 加载 .env.test
 env_file = os.path.join(os.path.dirname(__file__), '.env.test')
@@ -124,7 +128,7 @@ except Exception as e:
 
 
 def group_crud():
-    """组1：向量 CRUD（N-EXP-03）"""
+    """组1：向量 CRUD"""
     print("--- 组1: 向量 CRUD（floatvector + GsIVFFLAT + <+> 检索）---")
     TBL = 'n8n_l4_vec_crud'
     cur.execute(f'DROP TABLE IF EXISTS {TBL}')
@@ -196,7 +200,7 @@ def try_dim(method, dim, idx_sql, expect_ok=True):
 
 
 def group_dim():
-    """组2：维度上限（N-EXP-05）—— 无PQ 索引 ≤1024 可用，>1024 硬限被拒"""
+    """组2：维度上限—— 无PQ 索引 ≤1024 可用，>1024 硬限被拒"""
     print("\n--- 组2: 维度上限（GsIVFFLAT / GsDiskANN 无PQ：≤1024 可用 + >1024 硬限）---")
     # ≤1024 无PQ 索引应成功
     try_dim('ivfflat', 1024, 'CREATE INDEX ON {tbl} USING gsivfflat (embedding cosine) WITH (ivf_nlist=10)')
@@ -210,7 +214,7 @@ def group_dim():
 
 
 def group_pq():
-    """组3：GsDiskANN+PQ 高维（N-EXP-06）"""
+    """组3：GsDiskANN+PQ 高维"""
     print("\n--- 组3: GsDiskANN+PQ 高维（1536/3072/4096 + pq_nseg 整除）---")
     for dim in [1536, 3072, 4096]:
         if not is_centralized and dim > 1024:
@@ -236,7 +240,7 @@ def group_pq():
 
 
 def group_boundary():
-    """组4：向量边界（N-EXP-13 向量子集）"""
+    """组4：向量边界"""
     print("\n--- 组4: 向量边界（空结果 / 超大 top-k / 零向量）---")
     TBL = 'n8n_l4_bvec'
     cur.execute(f'DROP TABLE IF EXISTS {TBL}')

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # L3 测试（方式二）：SQL 层冒烟
 # 直接对 GaussDB 执行 GaussDb 节点会发出的 SQL（O模式适配后），验证 SQL 在目标库可跑。
-# 与方式三（survey/pyexp/exp_c_ops_e2e.ts，经 n8n 节点 execute）层次互补：
-#   本脚本 = SQL 层（运维可直接跑，不依赖 n8n/tsx）
-#   探针    = 节点层（经 n8n 节点代码 + 真实 UI 参数）
+# 与 n8n UI 端到端（经 n8n 节点 execute）层次互补：
+#   本脚本 = SQL 层（运维可直接跑，不依赖 n8n）
+#   UI    = 节点层（经 n8n 节点代码 + 真实 UI 参数）
 #
 # 用法：
 #   cp .env.test.example .env.test && vi .env.test

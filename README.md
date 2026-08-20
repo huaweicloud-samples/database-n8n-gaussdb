@@ -102,24 +102,24 @@ GaussDB 连接分两个层面（详见 [delivery/配置文档.md](delivery/配�
 
 ## 目录结构
 
+本仓库是完整的 n8n 2.34.6 monorepo + GaussDB 适配。主要目录：
+
 ```
-├── packages/nodes-base/nodes/GaussDb/         # GaussDb 数据库节点（30 文件）
-├── packages/@n8n/nodes-langchain/
-│   └── nodes/vector_store/
-│       ├── VectorStoreGaussDB/                # 标准向量节点
-│       └── ChatHubVectorStoreGaussDB/         # ChatHub 向量节点
-├── packages/@n8n/errors/src/types.ts          # pre-existing 修复（ErrorOptions）
-├── delivery/                                  # 交付包
-│   ├── .env.example                           # n8n 配置模板
-│   ├── 配置文档.md                            # 数据库连接配置
-│   ├── 实施部署交付文档.md                    # 部署步骤
-│   ├── 测试指南.md                            # 测试方法
-│   ├── 注意事项.md                            # 部署/使用/二次开发避坑必读
-│   └── tests/                                 # 测试脚本（连通/数据库/向量 + run_all.sh）
-└── survey/                                    # 调研产出（不入 git，仅内部参考）
-└── survey/                                    # 调研产出（不入 git，仅内部参考）
-    ├── n8n-gaussdb-调研报告.md
-    └── pyexp/                                 # 探针脚本
+├── packages/                          # n8n 完整源码（所有原版包）
+│   ├── nodes-base/
+│   │   └── nodes/GaussDb/             # 新增：GaussDB 数据库节点（6 operation）
+│   ├── @n8n/nodes-langchain/
+│   │   └── nodes/vector_store/
+│   │       ├── VectorStoreGaussDB/    # 新增：GaussDB 向量节点
+│   │       └── ChatHubVectorStoreGaussDB/  # 新增：ChatHub 向量节点
+│   └── @n8n/errors/                   # 修复：ErrorOptions 类型
+├── delivery/                          # 交付文档 + 测试脚本
+│   ├── 配置文档.md / 实施部署交付文档.md / 测试指南.md / 注意事项.md
+│   ├── .env.example
+│   └── tests/                         # 连通/数据库/向量测试 + run_all.sh
+├── docker/                            # Docker 构建配置
+├── docs/                              # n8n 文档
+└── package.json / pnpm-workspace.yaml / turbo.json  # monorepo 配置
 ```
 
 ## GaussDB 前置条件
