@@ -28,7 +28,7 @@ GaussDB 生态建设：n8n 适配兼容 GaussDB（数据库节点 + 向量库）
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/huaweicloud-samples/database-n8n-gaussdb.git
+git clone -b dev https://github.com/huaweicloud-samples/database-n8n-gaussdb.git
 cd database-n8n-gaussdb
 
 # 2. 构建（全量 build 约 10-20 分钟）
