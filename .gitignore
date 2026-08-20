@@ -103,3 +103,6 @@ delivery/tests/__pycache__/
 gaussdb_test.log
 eval-run.log
 eval-smoke.log
+
+# 本地 RAG 测试实例数据（delivery/tests/rag 测试产生）
+.n8n-rag/
